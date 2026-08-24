@@ -65,6 +65,9 @@ export function startMCPServer(port: number) {
   });
 
   app.listen(port, () => {
+    // Register dashboard/history routes on the same server
+    startWebServer(app, port);
+
     console.log(`[http] listening on :${port}`);
     console.log(`  GET  /                       -> dashboard`);
     console.log(`  GET  /web/                   -> dashboard`);

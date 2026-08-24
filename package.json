@@ -4,7 +4,8 @@
   "description": "Hermes-powered Ubuntu ops agent: Docker monitor + public IP check + Feishu alert",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy:assets",
+    "copy:assets": "node -e \"const fs=require('fs'),path=require('path');function cp(s,d){if(!fs.existsSync(s))return;fs.mkdirSync(d,{recursive:true});for(const e of fs.readdirSync(s)){const ss=path.join(s,e),dd=path.join(d,e);fs.statSync(ss).isDirectory()?cp(ss,dd):fs.copyFileSync(ss,dd)}}cp('src/web/public','dist/web/public')\"",
     "dev": "ts-node src/index.ts",
     "start": "node dist/index.js"
   },
