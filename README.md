@@ -10,7 +10,7 @@
 - 💬 **飞书告警**:富文本卡片 + @指定人
 - 📊 **SQLite 历史数据**:每次采样入库,默认保留 7 天
 - 🖼️ **Web 面板**:实时仪表盘 + 趋势图 + 告警流
-  - 打开 `http://localhost:8080/web/` 即可
+  - 打开 `http://localhost:8888/web/` 即可
 - 🌐 **HTTP / MCP 接口**:给 Hermes / 客户端调用
   - `GET  /health`
   - `GET  /api/docker/containers`
@@ -45,10 +45,10 @@ docker compose up -d
 ### 4. 验证
 
 ```bash
-curl http://localhost:8080/health
-curl http://localhost:8080/api/docker/containers
-curl http://localhost:8080/api/system
-curl http://localhost:8080/api/ip
+curl http://localhost:8888/health
+curl http://localhost:8888/api/docker/containers
+curl http://localhost:8888/api/system
+curl http://localhost:8888/api/ip
 ```
 
 ## 配置说明
@@ -62,7 +62,7 @@ curl http://localhost:8080/api/ip
 | `FEISHU_AT_MOBILES` | ⭕ | @ 的手机号,逗号分隔 |
 | `FEISHU_AT_ALL` | ⭕ | 是否 @所有人 |
 | `CHECK_INTERVAL` | ⭕ | 检查间隔(秒),默认 60 |
-| `HTTP_PORT` | ⭕ | HTTP 端口,默认 8080 |
+| `HTTP_PORT` | ⭕ | HTTP 端口,默认 8888（避开 cadence-rocky:final 已用的 8080） |
 
 ## 接入 Hermes
 
@@ -73,7 +73,7 @@ Hermes 可以直接通过 HTTP MCP 调这些端点。
 mcp_servers:
   - name: system-status
     type: http
-    base_url: http://localhost:8080
+    base_url: http://localhost:8888
     tools:
       - name: list_containers
         method: GET

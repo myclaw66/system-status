@@ -15,9 +15,10 @@ services:
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      # 8888 是为了避开宿主机上 cadence-rocky:final 已占用的 8080
+      - "8888:8888"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
       interval: 30s
       timeout: 5s
       retries: 3

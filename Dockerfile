@@ -57,16 +57,16 @@ ENV NODE_ENV=production \
     RULES_PATH=/app/config/rules.yaml \
     DB_PATH=/data/system-status.db \
     IP_CACHE_PATH=/data/last_ip.json \
-    HTTP_PORT=8080 \
+    HTTP_PORT=8888 \
     CHECK_INTERVAL=60
 
-EXPOSE 8080
+EXPOSE 8888
 
 # dumb-init 正确转发 SIGTERM/SIGINT 给 node,避免 PID 1 信号丢失
 ENTRYPOINT ["dumb-init", "--"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:8080/health || exit 1
+    CMD curl -fsS http://127.0.0.1:8888/health || exit 1
 
 USER app
 

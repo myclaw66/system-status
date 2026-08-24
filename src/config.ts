@@ -19,7 +19,7 @@ export function loadConfig(): AppConfig {
 
   return {
     checkInterval: Number(process.env.CHECK_INTERVAL || 60),
-    httpPort: Number(process.env.HTTP_PORT || 8080),
+    httpPort: Number(process.env.HTTP_PORT || 8888),
     feishu: {
       webhook: process.env.FEISHU_WEBHOOK || '',
       secret: process.env.FEISHU_SECRET,
