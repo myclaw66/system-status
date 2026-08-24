@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>system-status</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a1f2e;
+      --border: #2a3142;
+      --text: #e4e7eb;
+      --text-dim: #8b95a5;
+      --accent: #5b9dff;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      min-height: 100vh;
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+    .header h1 { font-size: 24px; font-weight: 600; }
+    .header .meta { color: var(--text-dim); font-size: 13px; }
+    .header .meta span { margin-left: 16px; }
+    .auto-refresh { color: var(--accent); }
+
+    .grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .stat-card .label { color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 600; margin-top: 4px; }
+    .stat-card .sub { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+    .stat-card .value.warning { color: var(--warning); }
+    .stat-card .value.danger { color: var(--danger); }
+    .stat-card .value.success { color: var(--success); }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .section h2 {
+      font-size: 14px; color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 16px;
+    }
+    .chart-wrap { position: relative; height: 220px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-dim); font-weight: 500; font-size: 12px; text-transform: uppercase; }
+    tr:hover td { background: rgba(91, 157, 255, 0.05); }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 500;
+    }
+    .badge.running { background: rgba(74, 222, 128, 0.15); color: var(--success); }
+    .badge.exited { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+    .badge.unhealthy { background: rgba(251, 191, 36, 0.15); color: var(--warning); }
+    .badge.restarting { background: rgba(91, 157, 255, 0.15); color: var(--accent); }
+    .badge.none { background: rgba(139, 149, 165, 0.15); color: var(--text-dim); }
+
+    .alert-list { max-height: 300px; overflow-y: auto; }
+    .alert-item {
+      display: flex; gap: 12px; padding: 8px 0;
+      border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .alert-item:last-child { border-bottom: none; }
+    .alert-level {
+      width: 4px; border-radius: 2px; flex-shrink: 0;
+    }
+    .alert-level.info { background: var(--accent); }
+    .alert-level.warning { background: var(--warning); }
+    .alert-level.danger { background: var(--danger); }
+    .alert-content { flex: 1; }
+    .alert-title { font-weight: 500; }
+    .alert-meta { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+    .alert-msg { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+
+    .ip-row {
+      display: flex; justify-content: space-between; padding: 6px 0;
+      font-size: 13px; border-bottom: 1px solid var(--border);
+    }
+    .ip-row:last-child { border-bottom: none; }
+    .ip-row .time { color: var(--text-dim); font-size: 12px; }
+    .ip-row .changed { color: var(--warning); }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .row-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>🛰️ system-status</h1>
+      <div class="meta">
+        <span id="hostname">hostname: -</span>
+        <span id="uptime">uptime: -</span>
+        <span class="auto-refresh">● 自动刷新 5s</span>
+      </div>
+    </div>
+    <div style="color:var(--text-dim);font-size:12px;">
+      <div id="last-update">-</div>
+    </div>
+  </div>
+
+  <div class="grid" id="stat-grid"></div>
+
+  <div class="row-2">
+    <div class="section">
+      <h2>系统资源趋势(最近 1 小时)</h2>
+      <div class="chart-wrap"><canvas id="sysChart"></canvas></div>
+    </div>
+    <div class="section">
+      <h2>告警事件流</h2>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Docker 容器</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>容器</th><th>镜像</th><th>状态</th><th>健康</th>
+          <th>重启</th><th>CPU</th><th>内存</th>
+        </tr>
+      </thead>
+      <tbody id="container-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="row-2">
+    <div class="section">
+      <h2>公网 IP 历史</h2>
+      <div id="ip-list"></div>
+    </div>
+    <div class="section">
+      <h2>系统总览</h2>
+      <div id="system-detail" style="font-size:13px;line-height:1.8;"></div>
+    </div>
+  </div>
+
+<script>
+const fmtBytes = b => {
+  if (!b) return '0 B';
+  const u = ['B','KB','MB','GB','TB'];
+  let i = 0; let n = b;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return n.toFixed(1) + ' ' + u[i];
+};
+const fmtTime = ts => new Date(ts).toLocaleString('zh-CN', { hour12: false });
+const fmtUptime = s => {
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return `${d}d ${h}h ${m}m`;
+};
+const badge = (s) => {
+  const map = { running: 'running', exited: 'exited', restarting: 'restarting' };
+  return `<span class="badge ${map[s] || 'none'}">${s}</span>`;
+};
+
+let sysChart;
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+
+async function refreshStats() {
+  const [dashboard, sys, alerts] = await Promise.all([
+    fetchJSON('/api/dashboard'),
+    fetchJSON('/api/system'),
+    fetchJSON('/api/alerts/recent'),
+  ]);
+  const d = dashboard.data || {};
+  const s = sys.data || {};
+  const latest = d.latestSystem || {};
+
+  document.getElementById('hostname').textContent = 'hostname: ' + (s.hostname || '-');
+  document.getElementById('uptime').textContent = 'uptime: ' + (s.uptime ? fmtUptime(s.uptime) : '-');
+  document.getElementById('last-update').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+  const memClass = s.memPercent > 85 ? 'danger' : s.memPercent > 70 ? 'warning' : 'success';
+  const cpuClass = s.cpuPercent > 90 ? 'danger' : s.cpuPercent > 70 ? 'warning' : 'success';
+  const diskMax = Math.max(0, ...(s.disks || []).map(d => d.usePercent));
+  const diskClass = diskMax > 90 ? 'danger' : diskMax > 75 ? 'warning' : 'success';
+  const runningCount = (d.containers || []).filter(c => c.state === 'running').length;
+  const totalCount = (d.containers || []).length;
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="label">CPU 使用率</div>
+      <div class="value ${cpuClass}">${(s.cpuPercent ?? 0).toFixed(1)}%</div>
+      <div class="sub">load: ${(s.loadAvg || []).join(' / ')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">内存</div>
+      <div class="value ${memClass}">${(s.memPercent ?? 0).toFixed(1)}%</div>
+      <div class="sub">${fmtBytes(s.memUsed)} / ${fmtBytes(s.memTotal)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">磁盘(最大)</div>
+      <div class="value ${diskClass}">${diskMax.toFixed(1)}%</div>
+      <div class="sub">${(s.disks || []).length} 个挂载点</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">容器</div>
+      <div class="value">${runningCount} / ${totalCount}</div>
+      <div class="sub">运行中 / 总数</div>
+    </div>
+  `;
+
+  // 系统详情
+  document.getElementById('system-detail').innerHTML = `
+    <div>主机名: <b>${s.hostname || '-'}</b></div>
+    <div>CPU 核数: <b>${latest.cpu_percent !== undefined ? '已记录' : '采样中...'}</b></div>
+    <div>内存: <b>${fmtBytes(s.memUsed)} / ${fmtBytes(s.memTotal)}</b></div>
+    <div>负载(1/5/15): <b>${(s.loadAvg || []).join(' / ')}</b></div>
+    <div>运行时间: <b>${s.uptime ? fmtUptime(s.uptime) : '-'}</b></div>
+  `;
+
+  // 容器表
+  const tbody = document.getElementById('container-tbody');
+  if (!d.containers || d.containers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);">暂无容器</td></tr>';
+  } else {
+    tbody.innerHTML = d.containers.map(c => `
+      <tr>
+        <td><b>${c.name}</b></td>
+        <td style="color:var(--text-dim);font-size:12px;">${(c.image || '').slice(0, 40)}</td>
+        <td>${badge(c.state)}</td>
+        <td>${c.health ? `<span class="badge ${c.health === 'healthy' ? 'running' : c.health === 'unhealthy' ? 'unhealthy' : 'none'}">${c.health}</span>` : '-'}</td>
+        <td>${c.restart_count || 0}</td>
+        <td>${(c.cpu_percent || 0).toFixed(1)}%</td>
+        <td>${(c.mem_percent || 0).toFixed(1)}%</td>
+      </tr>
+    `).join('');
+  }
+
+  // 告警
+  const alertList = document.getElementById('alert-list');
+  if (!alerts.data || alerts.data.length === 0) {
+    alertList.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">暂无告警</div>';
+  } else {
+    alertList.innerHTML = alerts.data.map(a => `
+      <div class="alert-item">
+        <div class="alert-level ${a.level}"></div>
+        <div class="alert-content">
+          <div class="alert-title">${a.title}</div>
+          <div class="alert-meta">${fmtTime(a.ts)} · ${a.type}</div>
+          ${a.message ? `<div class="alert-msg">${a.message}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // IP 历史
+  const ipRes = await fetchJSON('/api/history/ip');
+  const ipList = document.getElementById('ip-list');
+  if (!ipRes.data || ipRes.data.length === 0) {
+    ipList.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">暂无记录</div>';
+  } else {
+    ipList.innerHTML = ipRes.data.slice(0, 10).map(i => `
+      <div class="ip-row">
+        <div>
+          <b>${i.ip}</b>
+          ${i.changed ? '<span class="changed"> 变化</span>' : ''}
+        </div>
+        <div class="time">${fmtTime(i.ts)}</div>
+      </div>
+    `).join('');
+  }
+}
+
+async function refreshChart() {
+  const res = await fetchJSON('/api/history/system?minutes=60');
+  const data = res.data || [];
+  const labels = data.map(d => new Date(d.ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
+
+  const cfg = {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'CPU %', data: data.map(d => d.cpu_percent), borderColor: '#5b9dff', backgroundColor: 'rgba(91,157,255,0.1)', tension: 0.3, yAxisID: 'y' },
+        { label: '内存 %', data: data.map(d => d.mem_percent), borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', tension: 0.3, yAxisID: 'y' },
+        { label: '磁盘 %', data: data.map(d => d.disk_use_max), borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', tension: 0.3, yAxisID: 'y' },
+        { label: 'Load1', data: data.map(d => d.load1), borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.1)', tension: 0.3, yAxisID: 'y' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#8b95a5' } } },
+      scales: {
+        x: { ticks: { color: '#8b95a5', maxTicksLimit: 8 }, grid: { color: '#2a3142' } },
+        y: { ticks: { color: '#8b95a5' }, grid: { color: '#2a3142' }, beginAtZero: true }
+      }
+    }
+  };
+  if (sysChart) { sysChart.data = cfg.data; sysChart.update('none'); }
+  else { sysChart = new Chart(document.getElementById('sysChart'), cfg); }
+}
+
+async function refreshAll() {
+  try { await refreshStats(); await refreshChart(); }
+  catch (e) { console.error(e); }
+}
+refreshAll();
+setInterval(refreshAll, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "system-status",
+  "version": "0.1.0",
+  "description": "Hermes-powered Ubuntu ops agent: Docker monitor + public IP check + Feishu alert",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "better-sqlite3": "^11.3.0",
+    "dockerode": "^4.0.2",
+    "express": "^4.21.0",
+    "js-yaml": "^4.1.0",
+    "systeminformation": "^5.23.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/express": "^4.17.21",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.7.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  }
+}

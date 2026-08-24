@@ -1,0 +1,28 @@
+rules:
+  docker:
+    container_down:
+      check: "state == 'exited' && restartCount > 0"
+      severity: danger
+      cooldown: 300
+    container_unhealthy:
+      check: "health == 'unhealthy'"
+      severity: warning
+      cooldown: 300
+  system:
+    high_memory:
+      check: "memPercent > 85"
+      severity: warning
+      cooldown: 300
+    high_cpu:
+      check: "cpuPercent > 90"
+      severity: warning
+      cooldown: 300
+    disk_full:
+      check: "any(disk.usePercent > 90)"
+      severity: danger
+      cooldown: 600
+  ip:
+    ip_changed:
+      check: "changed == true"
+      severity: info
+      cooldown: 0
