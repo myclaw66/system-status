@@ -1,0 +1,19 @@
+# 构建/运行时不应进 image 的文件
+node_modules
+dist
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose*.yml
+.env
+.env.*
+!.env.example
+data
+*.log
+.DS_Store
+coverage
+.vscode
+.idea
+README.md

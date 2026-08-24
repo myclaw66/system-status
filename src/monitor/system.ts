@@ -1,4 +1,5 @@
 import si from 'systeminformation';
+import { loadavg as nodeLoadavg } from 'os';
 
 export interface SystemMetrics {
   cpuPercent: number;
@@ -12,7 +13,8 @@ export interface SystemMetrics {
 }
 
 export async function getSystemMetrics(): Promise<SystemMetrics> {
-  const [load, mem, fs, os, cpu] = await Promise.all([
+  const nodeLoad = nodeLoadavg(); // [1min, 5min, 15min] -1 on unsupported platforms
+  const [load, mem, fs, osInfo, cpu] = await Promise.all([
     si.currentLoad(),
     si.mem(),
     si.fsSize(),
@@ -26,8 +28,8 @@ export async function getSystemMetrics(): Promise<SystemMetrics> {
     memPercent: Number(((mem.active / mem.total) * 100).toFixed(2)),
     loadAvg: [
       Number(load.avgLoad.toFixed(2)),
-      Number(load.avgLoad5?.toFixed(2) ?? load.avgLoad.toFixed(2)),
-      Number(load.avgLoad15?.toFixed(2) ?? load.avgLoad.toFixed(2)),
+      Number((nodeLoad[1] >= 0 ? nodeLoad[1] : load.avgLoad).toFixed(2)),
+      Number((nodeLoad[2] >= 0 ? nodeLoad[2] : load.avgLoad).toFixed(2)),
     ],
     disks: fs.map(d => ({
       fs: d.fs,
@@ -37,6 +39,6 @@ export async function getSystemMetrics(): Promise<SystemMetrics> {
       usePercent: d.use,
     })),
     uptime: si.time().uptime,
-    hostname: os.hostname,
+    hostname: osInfo.hostname,
   };
 }

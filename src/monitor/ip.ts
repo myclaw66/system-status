@@ -16,7 +16,7 @@ export interface IPCheckResult {
   providers: string[];
 }
 
-export async function checkPublicIP(): Promise<IPheckResult> {
+export async function checkPublicIP(): Promise<IPCheckResult> {
   const results = await Promise.allSettled(
     PROVIDERS.map(url =>
       axios.get(url, { timeout: 5000 }).then(r => {
