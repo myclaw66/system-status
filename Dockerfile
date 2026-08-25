@@ -42,7 +42,8 @@ WORKDIR /app
 
 # 非 root 用户(uid 1001),与 host uid 冲突时可覆盖
 RUN groupadd --system --gid 1001 app \
-    && useradd  --system --uid 1001 --gid app --shell /bin/false --home /app app
+    && groupadd --gid 124 docker || true \
+    && useradd  --system --uid 1001 --gid app --groups 124 --shell /bin/false --home /app app
 
 # 仅拷运行时需要的产物
 COPY --from=builder --chown=app:app /app/dist        ./dist
