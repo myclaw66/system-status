@@ -1,11 +1,11 @@
-import { AppConfig } from '../config';
-import { listContainers } from './docker';
-import { getSystemMetrics } from './system';
-import { checkPublicIP } from './ip';
-import { initFeishu, alerts } from '../alert/templates';
-import { recordAlert } from '../db';
-import { sampleAll } from '../scheduler/sample';
-import { cleanupOldData } from '../db';
+import { AppConfig } from '../config.js';
+import { listContainers } from './docker.js';
+import { getSystemMetrics } from './system.js';
+import { checkPublicIP } from './ip.js';
+import { initFeishu, alerts } from '../alert/templates.js';
+import { recordAlert } from '../db/index.js';
+import { sampleAll } from '../scheduler/sample.js';
+import { cleanupOldData } from '../db/index.js';
 
 const state = {
   lastIP: null as string | null,

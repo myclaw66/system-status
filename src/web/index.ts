@@ -1,6 +1,10 @@
+import { fileURLToPath } from 'url';
 import express, { Request, Response } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import {
   getSystemSeries,
   getContainerSeries,
@@ -8,7 +12,7 @@ import {
   getRecentAlerts,
   getLatestContainers,
   getLatestSystem,
-} from '../db';
+} from '../db/index.js';
 
 export function startWebServer(app: express.Express, port: number) {
   // 静态文件

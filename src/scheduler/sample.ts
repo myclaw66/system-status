@@ -1,11 +1,11 @@
-import { listContainers, ContainerInfo } from '../monitor/docker';
-import { getSystemMetrics, SystemMetrics } from '../monitor/system';
-import { checkPublicIP } from '../monitor/ip';
+import { listContainers, ContainerInfo } from '../monitor/docker.js';
+import { getSystemMetrics, SystemMetrics } from '../monitor/system.js';
+import { checkPublicIP } from '../monitor/ip.js';
 import {
   recordContainerSamples,
   recordSystemSample,
   recordIP,
-} from '../db';
+} from '../db/index.js';
 
 export async function sampleAll() {
   // 1. Docker

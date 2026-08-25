@@ -1,5 +1,5 @@
-import { FeishuBot } from './feishu';
-import { AppConfig } from '../config';
+import { FeishuBot } from './feishu.js';
+import { AppConfig } from '../config.js';
 
 let bot: FeishuBot;
 

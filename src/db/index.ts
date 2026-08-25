@@ -102,38 +102,44 @@ export function recordAlert(level: string, type: string, title: string, message:
   `).run(Date.now(), level, type, title, message);
 }
 
+// ============ Row types ============
+export interface SystemRow { ts: number; cpu_percent: number; mem_percent: number; load1: number; disk_use_max: number; }
+export interface ContainerRow { ts: number; name: string; cpu_percent: number; mem_percent: number; restart_count: number; }
+export interface IPRow { ts: number; ip: string; providers: string; changed: number; }
+export interface AlertRow { ts: number; level: string; type: string; title: string; message: string; }
+
 // ============ 读取 ============
-export function getSystemSeries(minutes: number) {
+export function getSystemSeries(minutes: number): SystemRow[] {
   const since = Date.now() - minutes * 60 * 1000;
   return db.prepare(`
     SELECT ts, cpu_percent, mem_percent, load1, disk_use_max
     FROM system_samples WHERE ts >= ? ORDER BY ts ASC
-  `).all(since);
+  `).all(since) as SystemRow[];
 }
 
-export function getContainerSeries(name: string, minutes: number) {
+export function getContainerSeries(name: string, minutes: number): ContainerRow[] {
   const since = Date.now() - minutes * 60 * 1000;
   return db.prepare(`
     SELECT ts, cpu_percent, mem_percent, restart_count
     FROM container_samples WHERE name = ? AND ts >= ? ORDER BY ts ASC
-  `).all(name, since);
+  `).all(name, since) as ContainerRow[];
 }
 
-export function getIPHistory(limit = 50) {
+export function getIPHistory(limit = 50): IPRow[] {
   return db.prepare(`
     SELECT ts, ip, providers, changed FROM ip_history
     ORDER BY ts DESC LIMIT ?
-  `).all(limit);
+  `).all(limit) as IPRow[];
 }
 
-export function getRecentAlerts(limit = 50) {
+export function getRecentAlerts(limit = 50): AlertRow[] {
   return db.prepare(`
     SELECT ts, level, type, title, message FROM alert_events
     ORDER BY ts DESC LIMIT ?
-  `).all(limit);
+  `).all(limit) as AlertRow[];
 }
 
-export function getLatestContainers() {
+export function getLatestContainers(): (ContainerRow & { id: string; state: string; health: string; mem_usage: number; mem_limit: number })[] {
   // 每个容器取最新一条
   return db.prepare(`
     SELECT * FROM container_samples
@@ -141,13 +147,13 @@ export function getLatestContainers() {
       SELECT name, MAX(ts) FROM container_samples GROUP BY name
     )
     ORDER BY name
-  `).all();
+  `).all() as any[];
 }
 
-export function getLatestSystem() {
+export function getLatestSystem(): SystemRow | undefined {
   return db.prepare(`
     SELECT * FROM system_samples ORDER BY ts DESC LIMIT 1
-  `).get();
+  `).get() as SystemRow | undefined;
 }
 
 // ============ 清理 ============
