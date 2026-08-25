@@ -7,6 +7,11 @@ dist/
 # Runtime data
 /data/
 
+# Secrets - never commit
+.env
+.env.*
+!.env.example
+
 # IDE
 .vscode/
 .idea/
